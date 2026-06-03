@@ -272,6 +272,8 @@ function finishHand() {
     gStats.hands++;
     gStats.net += chips;
     gResult = { chips, desc: describeResult() };
+    const folded = (gR1.length > 0 && gR1[gR1.length - 1] === FOLD) ||
+                   (gR2.length > 0 && gR2[gR2.length - 1] === FOLD);
     gHistory.unshift({
         n: gStats.hands,
         chips,
@@ -281,6 +283,7 @@ function finishHand() {
         r1: gR1.slice(),
         r2: gR2.slice(),
         human: gHuman,
+        revealed: !folded,
     });
     render();
 }
@@ -343,7 +346,6 @@ function setCard(id, card, isBoard, isOpp, foldReveal) {
     }
 }
 
-let oppRevealed = false;
 function revealOpp(el) {
     if (!gCards) return;
     const card = gCards[1 - gHuman];
@@ -352,6 +354,10 @@ function revealOpp(el) {
         <span class="rank-center">${CARD_LABEL[card]}</span>
         <span class="suit-center">♣</span>
     </div>`;
+    if (gHistory.length > 0) {
+        gHistory[0].revealed = true;
+        renderHistory();
+    }
 }
 
 function actionsWithCosts(actions, bet) {
@@ -453,8 +459,8 @@ function renderHistory() {
     const rows = gHistory.map(h => {
         const cls  = h.chips > 0 ? 'win' : h.chips < 0 ? 'loss' : 'draw';
         const sign = h.chips > 0 ? '+' : '';
-        const youCard  = CARD_LABEL[h.cards[h.human]];
-        const oppCard  = CARD_LABEL[h.cards[1 - h.human]];
+        const youCard   = CARD_LABEL[h.cards[h.human]];
+        const oppCard   = h.revealed ? CARD_LABEL[h.cards[1 - h.human]] : '?';
         const boardCard = h.pubCard !== null ? CARD_LABEL[h.pubCard] : '—';
         const r1str = h.r1.length ? actionsWithCosts(h.r1, 2).join(' → ') : '—';
         const r2str = h.r2.length ? actionsWithCosts(h.r2, 4).join(' → ') : '—';
