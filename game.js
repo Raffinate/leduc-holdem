@@ -486,6 +486,7 @@ function nextHand() { newHand(); }
 // ── Keyboard handler ───────────────────────────────────────────────────────
 
 document.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (!gPlaying) return;
     if (gResult) {
         if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); nextHand(); }
