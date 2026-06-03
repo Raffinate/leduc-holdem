@@ -380,8 +380,8 @@ function renderInfo() {
     const pot = potContributions(gR1, gR2).reduce((a, b) => a + b, 0);
     const round = isRoundDone(gR1) && gPubCard !== null ? 'Round 2' : 'Round 1';
     const pos = gHuman === 0 ? 'P1 (acts first)' : 'P2 (acts second)';
-    let html = `<div class="info-row"><span>${round} &nbsp;|&nbsp; Pot: ${pot}</span>
-        <span class="dim">&nbsp;&nbsp; You are ${pos}</span></div>`;
+    let html = `<div class="info-row">${round} &nbsp;|&nbsp; Pot: ${pot}</div>
+        <div class="info-row dim">You are ${pos}</div>`;
     if (gR1.length > 0) {
         html += `<div class="history">R1: ${actionsWithCosts(gR1, 2).join(' → ')}</div>`;
     }
@@ -465,14 +465,16 @@ function renderHistory() {
         const boardCard = h.pubCard !== null ? CARD_LABEL[h.pubCard] : '—';
         const r1str = h.r1.length ? actionsWithCosts(h.r1, 2).join(' → ') : '—';
         const r2str = h.r2.length ? actionsWithCosts(h.r2, 4).join(' → ') : '—';
+        const r2line = h.r2.length ? `<div class="log-row dim">R2: ${r2str}</div>` : '';
         return `<div class="log-entry">
-            <div class="log-header">
+            <div class="log-row">
                 <span class="log-n dim">#${h.n}</span>
                 <span class="log-chips ${cls}">${sign}${h.chips}</span>
                 <span class="log-desc dim">${h.desc}</span>
-                <span class="log-cards dim">You: ${youCard} &nbsp;Board: ${boardCard} &nbsp;Opp: ${oppCard}</span>
             </div>
-            <div class="log-history dim">R1: ${r1str} &nbsp;&nbsp; R2: ${r2str}</div>
+            <div class="log-row dim">You: ${youCard} &nbsp; Board: ${boardCard} &nbsp; Opp: ${oppCard}</div>
+            <div class="log-row dim">R1: ${r1str}</div>
+            ${r2line}
         </div>`;
     }).join('');
 
