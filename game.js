@@ -512,13 +512,13 @@ function startGame(strategy) {
         setStatus('loading');
         fetch(`data/${strategy}.json`)
             .then(r => r.json())
+            .catch(() => { setStatus('error'); throw null; })
             .then(data => {
                 gStrategyData = data;
                 gPlaying = true;
                 setStatus('playing');
                 newHand();
-            })
-            .catch(() => setStatus('error'));
+            });
     } else {
         gStrategyData = null;
         gPlaying = true;
