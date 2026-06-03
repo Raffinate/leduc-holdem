@@ -351,10 +351,10 @@ function renderInfo() {
     let html = `<div class="info-row"><span>${round} &nbsp;|&nbsp; Pot: ${pot}</span>
         <span class="dim">&nbsp;&nbsp; You are ${pos}</span></div>`;
     if (gR1.length > 0) {
-        html += `<div class="history">R1: ${gR1.map(actionLabel).join(' → ')}</div>`;
+        html += `<div class="history">R1: ${gR1.join(' → ')}</div>`;
     }
     if (gR2.length > 0) {
-        html += `<div class="history">R2: ${gR2.map(actionLabel).join(' → ')}</div>`;
+        html += `<div class="history">R2: ${gR2.join(' → ')}</div>`;
     }
     if (gLastAi) {
         html += `<div class="ai-action">Opponent: ${gLastAi.toLowerCase()}</div>`;
