@@ -222,6 +222,7 @@ let gResult = null;
 let gLastAi = null;
 let gStats = { hands: 0, net: 0 };
 let gPlaying = false;
+let gHistory = [];
 
 function newHand() {
     gR1 = []; gR2 = []; gPubCard = null; gResult = null; gLastAi = null;
@@ -271,6 +272,16 @@ function finishHand() {
     gStats.hands++;
     gStats.net += chips;
     gResult = { chips, desc: describeResult() };
+    gHistory.unshift({
+        n: gStats.hands,
+        chips,
+        desc: gResult.desc,
+        cards: gCards.slice(),
+        pubCard: gPubCard,
+        r1: gR1.slice(),
+        r2: gR2.slice(),
+        human: gHuman,
+    });
     render();
 }
 
@@ -298,6 +309,7 @@ function render() {
     renderInfo();
     renderActions();
     renderStats();
+    renderHistory();
 }
 
 function renderCards() {
@@ -433,6 +445,33 @@ function renderStats() {
     el.textContent = `${sign}${gStats.net.toFixed(0)} chips  (${gStats.hands} hands)`;
 }
 
+function renderHistory() {
+    const el = document.getElementById('history-log');
+    if (!el) return;
+    if (gHistory.length === 0) { el.innerHTML = ''; return; }
+
+    const rows = gHistory.map(h => {
+        const cls  = h.chips > 0 ? 'win' : h.chips < 0 ? 'loss' : 'draw';
+        const sign = h.chips > 0 ? '+' : '';
+        const youCard  = CARD_LABEL[h.cards[h.human]];
+        const oppCard  = CARD_LABEL[h.cards[1 - h.human]];
+        const boardCard = h.pubCard !== null ? CARD_LABEL[h.pubCard] : '—';
+        const r1str = h.r1.length ? actionsWithCosts(h.r1, 2).join(' → ') : '—';
+        const r2str = h.r2.length ? actionsWithCosts(h.r2, 4).join(' → ') : '—';
+        return `<div class="log-entry">
+            <div class="log-header">
+                <span class="log-n dim">#${h.n}</span>
+                <span class="log-chips ${cls}">${sign}${h.chips}</span>
+                <span class="log-desc dim">${h.desc}</span>
+                <span class="log-cards dim">You: ${youCard} &nbsp;Board: ${boardCard} &nbsp;Opp: ${oppCard}</span>
+            </div>
+            <div class="log-history dim">R1: ${r1str} &nbsp;&nbsp; R2: ${r2str}</div>
+        </div>`;
+    }).join('');
+
+    el.innerHTML = rows;
+}
+
 function nextHand() { newHand(); }
 
 // ── Keyboard handler ───────────────────────────────────────────────────────
@@ -481,16 +520,20 @@ function startGame(strategy) {
 function stopGame() {
     gPlaying = false;
     gCards = null;
+    gHistory = [];
     setStatus('idle');
     document.getElementById('game-info').innerHTML = '';
     document.getElementById('actions-area').innerHTML = '';
     document.getElementById('result-area').innerHTML = '';
+    document.getElementById('history-log').innerHTML = '';
     renderCards();
     renderStats();
 }
 
 function newSession() {
     gStats = { hands: 0, net: 0 };
+    gHistory = [];
+    renderHistory();
     newHand();
 }
 

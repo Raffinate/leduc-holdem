@@ -243,6 +243,60 @@ kbd {
     border-top: 1px solid #2a2a2a;
     margin: 20px 0;
 }
+
+/* ── History ───────────────────────────────────────────────────── */
+#history-section {
+    margin-top: 32px;
+}
+
+#history-section summary {
+    font-size: 12px;
+    color: #555;
+    cursor: pointer;
+    user-select: none;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+#history-section summary::-webkit-details-marker { display: none; }
+#history-section summary::before {
+    content: '▶';
+    font-size: 9px;
+    transition: transform 0.15s;
+}
+#history-section[open] summary::before { transform: rotate(90deg); }
+#history-section summary:hover { color: #888; }
+
+#history-log {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.log-entry {
+    border-left: 2px solid #2a2a2a;
+    padding: 5px 0 5px 12px;
+}
+
+.log-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.log-n { font-size: 11px; min-width: 28px; }
+.log-chips { font-size: 15px; font-weight: bold; min-width: 32px; }
+.log-chips.win  { color: #55dd55; }
+.log-chips.loss { color: #dd5555; }
+.log-chips.draw { color: #aaa; }
+.log-desc  { font-size: 12px; }
+.log-cards { font-size: 12px; }
+.log-history { font-size: 11px; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -279,6 +333,11 @@ kbd {
 <div id="game-info"></div>
 <div id="result-area"></div>
 <div id="actions-area"></div>
+
+<details id="history-section">
+    <summary>Hand history</summary>
+    <div id="history-log"></div>
+</details>
 
 <script src="game.js"></script>
 </body>
