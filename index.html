@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leduc Hold'em Solver</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: #1a1a1a;
+    color: #ddd;
+    padding: 24px;
+    min-height: 100vh;
+}
+
+h1 {
+    font-size: 16px;
+    font-weight: normal;
+    color: #888;
+    margin-bottom: 20px;
+    letter-spacing: 0.05em;
+}
+
+/* ── Controls ──────────────────────────────────────────────────── */
+#controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+select {
+    background: #2a2a2a;
+    color: #ddd;
+    border: 1px solid #444;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+select:focus { border-color: #666; }
+select:disabled { opacity: 0.5; cursor: default; }
+
+.btn {
+    background: #2e2e2e;
+    color: #ccc;
+    border: 1px solid #444;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+.btn:hover { background: #3a3a3a; border-color: #666; }
+.btn:active { background: #444; }
+
+.btn-action {
+    padding: 8px 18px;
+    font-size: 14px;
+    color: #eee;
+    border-color: #555;
+}
+.btn-next {
+    padding: 8px 20px;
+    font-size: 14px;
+    border-color: #555;
+    margin-top: 8px;
+}
+
+kbd {
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 11px;
+    color: #aaa;
+    font-family: inherit;
+}
+
+#sep { width: 1px; height: 24px; background: #444; }
+
+#stats {
+    font-size: 13px;
+    color: #aaa;
+    min-width: 150px;
+}
+
+#status {
+    font-size: 13px;
+}
+#status.error { color: #f66; }
+#status.loading { color: #aaa; }
+
+/* ── Cards row ─────────────────────────────────────────────────── */
+#cards-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    margin-bottom: 20px;
+}
+
+.card-slot label {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.card {
+    width: 58px;
+    height: 84px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-family: 'Georgia', serif;
+}
+
+.card-face {
+    background: #fff;
+    border: 1px solid #ccc;
+    color: #111;
+}
+
+.card-back {
+    background: #1a3680;
+    border: 1px solid #2a4a9a;
+}
+.card-back::after {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border: 1px solid #2a4a9a;
+    border-radius: 3px;
+}
+
+.card-back.clickable {
+    cursor: pointer;
+    transition: background 0.1s;
+}
+.card-back.clickable:hover { background: #204090; }
+.card-back.clickable::before {
+    content: 'click';
+    position: absolute;
+    bottom: 8px;
+    font-size: 9px;
+    color: #6888cc;
+    font-family: monospace;
+    z-index: 1;
+}
+
+.card-empty {
+    background: transparent;
+    border: 1.5px dashed #3a3a3a;
+    color: #3a3a3a;
+    font-size: 22px;
+}
+
+.rank-corner {
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    font-size: 11px;
+    line-height: 1;
+    color: #333;
+}
+
+.rank-center {
+    font-size: 32px;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.suit-center {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* ── Game info ─────────────────────────────────────────────────── */
+#game-info {
+    margin-bottom: 16px;
+    min-height: 60px;
+}
+
+.info-row {
+    font-size: 14px;
+    color: #bbb;
+    margin-bottom: 4px;
+}
+.dim { color: #666; font-size: 12px; }
+
+.history {
+    font-size: 12px;
+    color: #777;
+    margin-bottom: 2px;
+}
+
+.ai-action {
+    font-size: 13px;
+    color: #c8be44;
+    margin-top: 6px;
+}
+
+/* ── Result ────────────────────────────────────────────────────── */
+#result-area { margin-bottom: 12px; }
+
+.result {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 4px;
+}
+
+.chips {
+    font-size: 36px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.win  .chips { color: #55dd55; }
+.loss .chips { color: #dd5555; }
+.draw .chips { color: #aaaaaa; }
+
+.desc { font-size: 14px; color: #999; }
+
+/* ── Actions ───────────────────────────────────────────────────── */
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── Separator ─────────────────────────────────────────────────── */
+#divider {
+    border: none;
+    border-top: 1px solid #2a2a2a;
+    margin: 20px 0;
+}
+</style>
+</head>
+<body>
+
+<h1>Leduc Hold'em — Play vs Solver</h1>
+
+<div id="controls">
+    <select id="strategy-select" onchange=""></select>
+    <button class="btn" id="start-btn" onclick="startGame(document.getElementById('strategy-select').value)">▶ Start</button>
+    <button class="btn" id="stop-btn"      style="display:none" onclick="stopGame()">⏹ Stop</button>
+    <button class="btn" id="new-session-btn" style="display:none" onclick="newSession()">↺ New Session</button>
+    <span id="sep"></span>
+    <span id="stats"></span>
+    <span id="status"></span>
+</div>
+
+<hr id="divider">
+
+<div id="cards-row">
+    <div class="card-slot">
+        <label>You</label>
+        <div id="card-human"></div>
+    </div>
+    <div class="card-slot">
+        <label>Board</label>
+        <div id="card-board"></div>
+    </div>
+    <div class="card-slot">
+        <label>Opponent</label>
+        <div id="card-opp"></div>
+    </div>
+</div>
+
+<div id="game-info"></div>
+<div id="result-area"></div>
+<div id="actions-area"></div>
+
+<script src="game.js"></script>
+</body>
+</html>
