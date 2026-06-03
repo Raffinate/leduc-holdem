@@ -297,12 +297,13 @@ function describeResult() {
     }
     const handStr = p => {
         const c = gCards[p];
-        return c === gPubCard ? `${CARD_LABEL[c]} pair` : `${CARD_LABEL[c]} high`;
+        return c === gPubCard ? CARD_LABEL[c] + CARD_LABEL[c] : CARD_LABEL[c];
     };
     const u = utility(gCards, gPubCard, gR1, gR2, gHuman);
-    if (u > 0)  return `${handStr(gHuman)} beats ${handStr(1 - gHuman)}`;
-    if (u < 0)  return `${handStr(1 - gHuman)} beats ${handStr(gHuman)}`;
-    return `split — ${handStr(gHuman)} vs ${handStr(1 - gHuman)}`;
+    const yours = handStr(gHuman), theirs = handStr(1 - gHuman);
+    if (u > 0) return `${yours} > ${theirs}`;
+    if (u < 0) return `${yours} < ${theirs}`;
+    return `${yours} = ${theirs}`;
 }
 
 // ── Rendering ──────────────────────────────────────────────────────────────
