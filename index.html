@@ -190,7 +190,7 @@ kbd {
 /* ── Game info ─────────────────────────────────────────────────── */
 #game-info {
     margin-bottom: 16px;
-    min-height: 116px; /* round + position + R1 + R2 + AI action */
+    min-height: 220px; /* round + position + R1 + R2 + AI action + result */
 }
 
 .info-row {
@@ -213,8 +213,7 @@ kbd {
 }
 
 /* ── Result ────────────────────────────────────────────────────── */
-#play-area   { }
-#result-area { min-height: 100px; margin-bottom: 12px; }
+#result-area { margin-top: 12px; }
 
 .result {
     display: flex;
@@ -330,11 +329,10 @@ kbd {
     </div>
 </div>
 
-<div id="game-info"></div>
-<div id="play-area">
+<div id="game-info">
     <div id="result-area"></div>
-    <div id="actions-area"></div>
 </div>
+<div id="actions-area"></div>
 
 <details id="history-section">
     <summary>Hand history</summary>
