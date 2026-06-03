@@ -342,6 +342,19 @@ function revealOpp(el) {
     </div>`;
 }
 
+function actionsWithCosts(actions, bet) {
+    const committed = [0, 0];
+    let p = 0;
+    return actions.map(a => {
+        let cost = null;
+        if (a === BET)   { cost = bet;                                    committed[p] += bet; }
+        if (a === CALL)  { cost = committed[1-p] - committed[p];          committed[p] = committed[1-p]; }
+        if (a === RAISE) { cost = committed[1-p] + bet - committed[p];    committed[p] = committed[1-p] + bet; }
+        p = 1 - p;
+        return cost ? `${a} ${cost}` : a;
+    });
+}
+
 function renderInfo() {
     const infoEl = document.getElementById('game-info');
     if (!gPlaying || !gCards) { infoEl.innerHTML = ''; return; }
@@ -351,10 +364,10 @@ function renderInfo() {
     let html = `<div class="info-row"><span>${round} &nbsp;|&nbsp; Pot: ${pot}</span>
         <span class="dim">&nbsp;&nbsp; You are ${pos}</span></div>`;
     if (gR1.length > 0) {
-        html += `<div class="history">R1: ${gR1.join(' → ')}</div>`;
+        html += `<div class="history">R1: ${actionsWithCosts(gR1, 2).join(' → ')}</div>`;
     }
     if (gR2.length > 0) {
-        html += `<div class="history">R2: ${gR2.join(' → ')}</div>`;
+        html += `<div class="history">R2: ${actionsWithCosts(gR2, 4).join(' → ')}</div>`;
     }
     if (gLastAi) {
         html += `<div class="ai-action">Opponent: ${gLastAi.toLowerCase()}</div>`;
