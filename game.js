@@ -408,8 +408,8 @@ function renderActions() {
         resEl.innerHTML = `<div class="result ${cls}">
             <span class="chips">${sign}${chips}</span>
             <span class="desc">${desc}</span>
-        </div>
-        <button class="btn btn-next" id="next-btn" onclick="nextHand()">Next hand &nbsp;<kbd>Space</kbd></button>`;
+        </div>`;
+        actEl.innerHTML = `<button class="btn btn-next" id="next-btn" onclick="nextHand()">Next hand &nbsp;<kbd>Space</kbd></button>`;
         return;
     }
 
