@@ -507,7 +507,7 @@ function setCard(id, card, isBoard, isOpp, foldReveal) {
             <span class="rank-center" style="color:${suits[1]}">${label}</span>
             <span class="suit-center" style="color:${suits[1]}">${suits[0]}</span>
         </div>`;
-    } else if (isOpp) {
+    } else if (isOpp || !isBoard) {
         el.innerHTML = foldReveal
             ? `<div class="card card-back clickable" onclick="revealOpp(this)" title="Click to reveal">?</div>`
             : `<div class="card card-back"></div>`;
