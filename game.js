@@ -272,7 +272,7 @@ function mpHost() {
     gPeer = new Peer();
     gPeer.on('open', id => {
         const url = location.origin + location.pathname + '?join=' + id;
-        const copyIcon = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3" style="vertical-align:-2px"><rect x="4" y="0" width="9" height="9" rx="1"/><rect x="0" y="4" width="9" height="9" rx="1"/></svg>`;
+        const copyIcon = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3" style="vertical-align:-2px"><rect x="4" y="1" width="8" height="8" rx="1"/><rect x="1" y="4" width="8" height="8" rx="1" fill="var(--mp-bg)"/></svg>`;
         const el = document.getElementById('mp-invite');
         el.style.display = '';
         el.innerHTML = `<span class="dim">ID: ${id}</span>`
