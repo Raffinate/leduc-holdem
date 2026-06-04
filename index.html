@@ -7,10 +7,71 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Theme variables ───────────────────────────────────────────── */
+:root {
+  --bg:           #1a1a1a;
+  --surface:      #2a2a2a;
+  --surface-hi:   #2e2e2e;
+  --hover:        #3a3a3a;
+  --pressed:      #444;
+  --border:       #444;
+  --border-focus: #666;
+  --border-dim:   #2a2a2a;
+  --text:         #ddd;
+  --text-btn:     #ccc;
+  --text-hi:      #eee;
+  --text-mid:     #aaa;
+  --text-muted:   #888;
+  --text-dim:     #666;
+  --text-faint:   #555;
+  --text-info:    #bbb;
+  --text-hist:    #777;
+  --text-desc:    #999;
+  --win:          #55dd55;
+  --loss:         #dd5555;
+  --draw:         #aaaaaa;
+  --ai:           #c8be44;
+  --err:          #f66;
+  --empty:        #3a3a3a;
+  --mp-bg:        #1e1e1e;
+  --kbd-bg:       #333;
+  --kbd-border:   #555;
+}
+
+body.light {
+  --bg:           #f5f5f5;
+  --surface:      #e8e8e8;
+  --surface-hi:   #e0e0e0;
+  --hover:        #d4d4d4;
+  --pressed:      #c8c8c8;
+  --border:       #bbb;
+  --border-focus: #888;
+  --border-dim:   #ddd;
+  --text:         #1a1a1a;
+  --text-btn:     #333;
+  --text-hi:      #111;
+  --text-mid:     #555;
+  --text-muted:   #777;
+  --text-dim:     #888;
+  --text-faint:   #aaa;
+  --text-info:    #333;
+  --text-hist:    #666;
+  --text-desc:    #666;
+  --win:          #1a8a1a;
+  --loss:         #cc2222;
+  --draw:         #777;
+  --ai:           #7a6a00;
+  --err:          #c00;
+  --empty:        #bbb;
+  --mp-bg:        #ebebeb;
+  --kbd-bg:       #e0e0e0;
+  --kbd-border:   #bbb;
+}
+
 body {
     font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-    background: #1a1a1a;
-    color: #ddd;
+    background: var(--bg);
+    color: var(--text);
     padding: 24px;
     min-height: 100vh;
 }
@@ -18,7 +79,7 @@ body {
 h1 {
     font-size: 16px;
     font-weight: normal;
-    color: #888;
+    color: var(--text-muted);
     margin-bottom: 20px;
     letter-spacing: 0.05em;
 }
@@ -33,9 +94,9 @@ h1 {
 }
 
 select {
-    background: #2a2a2a;
-    color: #ddd;
-    border: 1px solid #444;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
     padding: 6px 10px;
     border-radius: 4px;
     font-family: inherit;
@@ -43,13 +104,13 @@ select {
     cursor: pointer;
     outline: none;
 }
-select:focus { border-color: #666; }
+select:focus { border-color: var(--border-focus); }
 select:disabled { opacity: 0.5; cursor: default; }
 
 .btn {
-    background: #2e2e2e;
-    color: #ccc;
-    border: 1px solid #444;
+    background: var(--surface-hi);
+    color: var(--text-btn);
+    border: 1px solid var(--border);
     padding: 6px 14px;
     border-radius: 4px;
     font-family: inherit;
@@ -57,44 +118,44 @@ select:disabled { opacity: 0.5; cursor: default; }
     cursor: pointer;
     transition: background 0.1s;
 }
-.btn:hover { background: #3a3a3a; border-color: #666; }
-.btn:active { background: #444; }
+.btn:hover { background: var(--hover); border-color: var(--border-focus); }
+.btn:active { background: var(--pressed); }
 
 .btn-action {
     padding: 8px 18px;
     font-size: 14px;
-    color: #eee;
-    border-color: #555;
+    color: var(--text-hi);
+    border-color: var(--border);
 }
 .btn-next {
     padding: 8px 20px;
     font-size: 14px;
-    border-color: #555;
+    border-color: var(--border);
 }
 
 kbd {
-    background: #333;
-    border: 1px solid #555;
+    background: var(--kbd-bg);
+    border: 1px solid var(--kbd-border);
     border-radius: 3px;
     padding: 1px 5px;
     font-size: 11px;
-    color: #aaa;
+    color: var(--text-mid);
     font-family: inherit;
 }
 
-#sep { width: 1px; height: 24px; background: #444; }
+#sep { width: 1px; height: 24px; background: var(--pressed); }
 
 #stats {
     font-size: 13px;
-    color: #aaa;
+    color: var(--text-mid);
     min-width: 150px;
 }
 
 #status {
     font-size: 13px;
 }
-#status.error { color: #f66; }
-#status.loading { color: #aaa; }
+#status.error { color: var(--err); }
+#status.loading { color: var(--text-mid); }
 
 /* ── Cards row ─────────────────────────────────────────────────── */
 #cards-row {
@@ -107,7 +168,7 @@ kbd {
 .card-slot label {
     display: block;
     font-size: 11px;
-    color: #666;
+    color: var(--text-dim);
     margin-bottom: 5px;
     text-transform: uppercase;
     letter-spacing: 0.07em;
@@ -160,8 +221,8 @@ kbd {
 
 .card-empty {
     background: transparent;
-    border: 1.5px dashed #3a3a3a;
-    color: #3a3a3a;
+    border: 1.5px dashed var(--empty);
+    color: var(--empty);
     font-size: 22px;
 }
 
@@ -194,20 +255,20 @@ kbd {
 
 .info-row {
     font-size: 14px;
-    color: #bbb;
+    color: var(--text-info);
     margin-bottom: 4px;
 }
-.dim { color: #666; font-size: 12px; }
+.dim { color: var(--text-dim); font-size: 12px; }
 
 .history {
     font-size: 12px;
-    color: #777;
+    color: var(--text-hist);
     margin-bottom: 2px;
 }
 
 .ai-action {
     font-size: 13px;
-    color: #c8be44;
+    color: var(--ai);
     margin-top: 6px;
 }
 
@@ -227,11 +288,11 @@ kbd {
     line-height: 1;
 }
 
-.win  .chips { color: #55dd55; }
-.loss .chips { color: #dd5555; }
-.draw .chips { color: #aaaaaa; }
+.win  .chips { color: var(--win); }
+.loss .chips { color: var(--loss); }
+.draw .chips { color: var(--draw); }
 
-.desc { font-size: 14px; color: #999; }
+.desc { font-size: 14px; color: var(--text-desc); }
 
 /* ── Actions ───────────────────────────────────────────────────── */
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -239,7 +300,7 @@ kbd {
 /* ── Separator ─────────────────────────────────────────────────── */
 #divider {
     border: none;
-    border-top: 1px solid #2a2a2a;
+    border-top: 1px solid var(--border-dim);
     margin: 20px 0;
 }
 
@@ -250,7 +311,7 @@ kbd {
 
 #history-section summary {
     font-size: 12px;
-    color: #555;
+    color: var(--text-faint);
     cursor: pointer;
     user-select: none;
     letter-spacing: 0.05em;
@@ -267,7 +328,7 @@ kbd {
     transition: transform 0.15s;
 }
 #history-section[open] summary::before { transform: rotate(90deg); }
-#history-section summary:hover { color: #888; }
+#history-section summary:hover { color: var(--text-muted); }
 
 #history-log {
     margin-top: 12px;
@@ -277,7 +338,7 @@ kbd {
 }
 
 .log-entry {
-    border-left: 2px solid #2a2a2a;
+    border-left: 2px solid var(--border-dim);
     padding: 5px 0 5px 12px;
 }
 
@@ -290,9 +351,9 @@ kbd {
 
 .log-n { font-size: 11px; min-width: 28px; }
 .log-chips { font-size: 15px; font-weight: bold; min-width: 32px; }
-.log-chips.win  { color: #55dd55; }
-.log-chips.loss { color: #dd5555; }
-.log-chips.draw { color: #aaa; }
+.log-chips.win  { color: var(--win); }
+.log-chips.loss { color: var(--loss); }
+.log-chips.draw { color: var(--text-mid); }
 .log-desc  { font-size: 12px; }
 .log-row   { font-size: 12px; margin-top: 2px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 
@@ -304,19 +365,19 @@ kbd {
     flex-wrap: wrap;
     margin-bottom: 16px;
     padding: 10px 14px;
-    border: 1px solid #2a2a2a;
+    border: 1px solid var(--border-dim);
     border-radius: 5px;
-    background: #1e1e1e;
+    background: var(--mp-bg);
 }
 
-#mp-invite { font-size: 13px; color: #aaa; }
+#mp-invite { font-size: 13px; color: var(--text-mid); }
 
 #mp-join-row { display: flex; align-items: center; gap: 8px; }
 
 #mp-join-input {
-    background: #2a2a2a;
-    color: #ddd;
-    border: 1px solid #444;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
     padding: 6px 10px;
     border-radius: 4px;
     font-family: inherit;
@@ -324,13 +385,14 @@ kbd {
     outline: none;
     width: 230px;
 }
-#mp-join-input:focus { border-color: #666; }
-#mp-join-input::placeholder { color: #555; }
+#mp-join-input:focus { border-color: var(--border-focus); }
+#mp-join-input::placeholder { color: var(--text-faint); }
 
-#mp-status-msg { font-size: 13px; color: #888; }
+#mp-status-msg { font-size: 13px; color: var(--text-muted); }
 </style>
 </head>
 <body>
+<script>if(localStorage.getItem('theme')==='light')document.body.classList.add('light');</script>
 
 <h1>Leduc Hold'em — Play vs Solver</h1>
 
@@ -342,6 +404,7 @@ kbd {
     <span id="sep"></span>
     <span id="stats"></span>
     <span id="status"></span>
+    <button class="btn" id="theme-btn" onclick="toggleTheme()" style="margin-left:auto">Light</button>
 </div>
 
 <div id="mp-setup" style="display:none">

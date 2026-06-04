@@ -678,6 +678,14 @@ document.addEventListener('keydown', e => {
     }
 });
 
+// ── Theme ──────────────────────────────────────────────────────────────────
+
+function toggleTheme() {
+    const light = document.body.classList.toggle('light');
+    localStorage.setItem('theme', light ? 'light' : 'dark');
+    document.getElementById('theme-btn').textContent = light ? 'Dark' : 'Light';
+}
+
 // ── Controls ───────────────────────────────────────────────────────────────
 
 function startGame(strategy) {
@@ -768,6 +776,9 @@ window.addEventListener('DOMContentLoaded', () => {
         opt.textContent = STRATEGY_LABELS[s];
         sel.appendChild(opt);
     }
+
+    document.getElementById('theme-btn').textContent =
+        document.body.classList.contains('light') ? 'Dark' : 'Light';
 
     // Auto-join if ?join= param is present in URL
     const joinId = new URLSearchParams(location.search).get('join');
