@@ -7,13 +7,14 @@ const J = 0, Q = 1, K = 2;
 // ── Action constants ───────────────────────────────────────────────────────
 const CHECK = 'Check', BET = 'Bet', CALL = 'Call', RAISE = 'Raise', FOLD = 'Fold';
 const CFR_STRATEGIES = ['exact','relative','pair','card_only','board_only','pair_only','blind'];
-const ALL_STRATEGIES = [...CFR_STRATEGIES, 'abc', 'random', 'always_call', 'always_raise'];
+const ALL_STRATEGIES = [...CFR_STRATEGIES, 'abc', 'random', 'always_call', 'always_raise', 'human'];
 
 const STRATEGY_LABELS = {
-    exact: 'Exact (CFR)',       relative: 'Relative (CFR)',   pair: 'Pair (CFR)',
+    exact: 'Exact (CFR)',         relative: 'Relative (CFR)',   pair: 'Pair (CFR)',
     card_only: 'Card Only (CFR)', board_only: 'Board Only (CFR)', pair_only: 'Pair Only (CFR)',
-    blind: 'Blind (CFR)',       abc: 'ABC (heuristic)',       random: 'Random',
-    always_call: 'Always Call', always_raise: 'Always Raise',
+    blind: 'Blind (CFR)',         abc: 'ABC (heuristic)',        random: 'Random',
+    always_call: 'Always Call',   always_raise: 'Always Raise',
+    human: 'vs Human (WebRTC)',
 };
 
 const HOTKEYS = {
@@ -212,7 +213,6 @@ function fixedAction(strategy, card, pubCard, actions) {
 
 let gStrategy = 'exact';
 let gStrategyData = null;
-let gLoading = false;
 let gCards = null;
 let gPubCard = null;
 let gR1 = [];
@@ -224,12 +224,163 @@ let gStats = { hands: 0, net: 0 };
 let gPlaying = false;
 let gHistory = [];
 
+// ── Multiplayer state ──────────────────────────────────────────────────────
+
+let gMode = 'solo';     // 'solo' | 'mp-host' | 'mp-guest'
+let gPeer = null;       // PeerJS Peer instance
+let gConn = null;       // DataConnection
+let gGuestSeat = null;  // guest's seat index, from host's perspective
+
+// ── Multiplayer helpers ────────────────────────────────────────────────────
+
+function onStrategyChange(s) {
+    document.getElementById('mp-setup').style.display = s === 'human' ? '' : 'none';
+}
+
+function setMpStatus(msg) {
+    const el = document.getElementById('mp-status-msg');
+    if (el) el.textContent = msg;
+}
+
+function mpCopyLink(url) {
+    navigator.clipboard.writeText(url).then(() => setMpStatus('Link copied!'));
+}
+
+function mpSend(msg) {
+    if (gConn) gConn.send(JSON.stringify(msg));
+}
+
+function mpSendState() {
+    mpSend({ type: 'state', pubCard: gPubCard, r1: gR1, r2: gR2 });
+}
+
+function mpDisconnect() {
+    if (gPeer) { gPeer.destroy(); gPeer = null; }
+    gConn = null;
+    gMode = 'solo';
+    gGuestSeat = null;
+}
+
+function mpHost() {
+    setStatus('loading');
+    setMpStatus('Starting…');
+    document.getElementById('mp-join-row').style.display = 'none';
+    gPeer = new Peer();
+    gPeer.on('open', id => {
+        const url = location.origin + location.pathname + '?join=' + id;
+        const el = document.getElementById('mp-invite');
+        el.style.display = '';
+        el.innerHTML = `<span class="dim">ID: ${id}</span>`
+            + ` &nbsp; <button class="btn" onclick="mpCopyLink('${url}')">Copy invite link</button>`;
+        setMpStatus('Waiting for opponent…');
+    });
+    gPeer.on('connection', conn => {
+        gConn = conn;
+        conn.on('open', () => {
+            gMode = 'mp-host';
+            document.getElementById('mp-setup').style.display = 'none';
+            gPlaying = true;
+            gStats = { hands: 0, net: 0 };
+            gHistory = [];
+            setStatus('playing');
+            newHand();
+        });
+        conn.on('data', raw => mpReceive(JSON.parse(raw)));
+        conn.on('close', () => stopGame());
+        conn.on('error', () => stopGame());
+    });
+    gPeer.on('error', err => setMpStatus('Error: ' + err.type));
+}
+
+function mpJoin() {
+    const raw = document.getElementById('mp-join-input').value.trim();
+    if (!raw) return;
+    let id = raw;
+    try { id = new URL(raw).searchParams.get('join') || raw; } catch (_) {}
+    setStatus('loading');
+    setMpStatus('Connecting…');
+    document.getElementById('mp-join-row').style.display = 'none';
+    gPeer = new Peer();
+    gPeer.on('open', () => {
+        gConn = gPeer.connect(id, { reliable: true });
+        gConn.on('open', () => {
+            gMode = 'mp-guest';
+            gPlaying = true;
+            gStats = { hands: 0, net: 0 };
+            gHistory = [];
+            document.getElementById('mp-setup').style.display = 'none';
+            setStatus('playing');
+        });
+        gConn.on('data', raw => mpReceive(JSON.parse(raw)));
+        gConn.on('close', () => stopGame());
+        gConn.on('error', () => stopGame());
+    });
+    gPeer.on('error', err => {
+        setMpStatus('Error: ' + err.type);
+        document.getElementById('mp-join-row').style.display = '';
+        setStatus('idle');
+    });
+}
+
+function mpReceive(msg) {
+    if (msg.type === 'start') {
+        gHuman = msg.guestSeat;
+        gCards = [null, null];
+        gCards[gHuman] = msg.yourCard;
+        gPubCard = null; gR1 = []; gR2 = []; gResult = null; gLastAi = null;
+        render();
+    } else if (msg.type === 'state') {
+        gPubCard = msg.pubCard;
+        gR1 = msg.r1;
+        gR2 = msg.r2;
+        render();
+    } else if (msg.type === 'result') {
+        if (msg.oppCard !== null) gCards[1 - gHuman] = msg.oppCard;
+        const chips = msg.chips;
+        gStats.hands++;
+        gStats.net += chips;
+        gResult = { chips, desc: msg.desc };
+        const folded = (gR1.length > 0 && gR1[gR1.length - 1] === FOLD) ||
+                       (gR2.length > 0 && gR2[gR2.length - 1] === FOLD);
+        gHistory.unshift({
+            n: gStats.hands, chips, desc: msg.desc,
+            cards: gCards.slice(), pubCard: gPubCard,
+            r1: gR1.slice(), r2: gR2.slice(),
+            human: gHuman, revealed: !folded,
+        });
+        render();
+    } else if (msg.type === 'action') {
+        // host receives guest's action
+        applyAction(msg.action);
+        mpSendState();
+        advance();
+    } else if (msg.type === 'new_session') {
+        gStats = { hands: 0, net: 0 };
+        gHistory = [];
+        renderHistory();
+        renderStats();
+    }
+}
+
+// ── Game loop ──────────────────────────────────────────────────────────────
+
 function newHand() {
     gR1 = []; gR2 = []; gPubCard = null; gResult = null; gLastAi = null;
-    gHuman = Math.random() < 0.5 ? 0 : 1;
-    const { c0, c1 } = dealPrivate();
-    gCards = [c0, c1];
-    advance();
+    if (gMode === 'mp-host') {
+        gGuestSeat = Math.random() < 0.5 ? 0 : 1;
+        gHuman = 1 - gGuestSeat;
+        const { c0, c1 } = dealPrivate();
+        gCards = [c0, c1];
+        mpSend({ type: 'start', guestSeat: gGuestSeat, yourCard: gCards[gGuestSeat] });
+        mpSendState();
+        advance();
+    } else if (gMode !== 'mp-guest') {
+        gHuman = Math.random() < 0.5 ? 0 : 1;
+        const { c0, c1 } = dealPrivate();
+        gCards = [c0, c1];
+        advance();
+    }
+    // mp-guest: waits for 'start' message from host
 }
 
 function advance() {
@@ -237,13 +388,15 @@ function advance() {
         if (isTerminal(gR1, gR2, gPubCard)) { finishHand(); return; }
         const p = currentPlayer(gR1, gR2, gCards !== null, gPubCard);
         if (p === 'chance') {
-            if (!isRoundDone(gR1)) {
-                // Already dealt in newHand via dealPrivate
-                // This shouldn't be reached — private cards dealt at start
-            } else {
+            if (isRoundDone(gR1)) {
                 gPubCard = dealPublic(gCards[0], gCards[1]);
+                if (gMode === 'mp-host') mpSendState();
             }
         } else if (p !== gHuman) {
+            if (gMode !== 'solo') {
+                render();
+                return; // wait for remote action via mpReceive
+            }
             const ai = p;
             const action = chooseAction(gStrategy, gStrategyData, gCards[ai], gPubCard, gR1, gR2, ai);
             gLastAi = action;
@@ -263,44 +416,59 @@ function applyAction(action) {
 
 function humanAct(action) {
     gLastAi = null;
-    applyAction(action);
-    advance();
+    if (gMode === 'mp-guest') {
+        mpSend({ type: 'action', action });
+        applyAction(action);
+        render(); // optimistic update; host echo confirms
+    } else {
+        applyAction(action);
+        if (gMode === 'mp-host') mpSendState(); // notify guest of host's action
+        advance();
+    }
 }
 
 function finishHand() {
     const chips = utility(gCards, gPubCard, gR1, gR2, gHuman);
     gStats.hands++;
     gStats.net += chips;
-    gResult = { chips, desc: describeResult() };
+    gResult = { chips, desc: describeResultFor(gHuman) };
     const folded = (gR1.length > 0 && gR1[gR1.length - 1] === FOLD) ||
                    (gR2.length > 0 && gR2[gR2.length - 1] === FOLD);
+
+    if (gMode === 'mp-host') {
+        mpSend({
+            type: 'result',
+            chips: utility(gCards, gPubCard, gR1, gR2, gGuestSeat),
+            desc: describeResultFor(gGuestSeat),
+            oppCard: folded ? null : gCards[gHuman],
+        });
+    }
+
     gHistory.unshift({
-        n: gStats.hands,
-        chips,
+        n: gStats.hands, chips,
         desc: gResult.desc,
         cards: gCards.slice(),
         pubCard: gPubCard,
-        r1: gR1.slice(),
-        r2: gR2.slice(),
+        r1: gR1.slice(), r2: gR2.slice(),
         human: gHuman,
         revealed: !folded,
     });
     render();
 }
 
-function describeResult() {
+function describeResultFor(player) {
     const r1fold = gR1.length > 0 && gR1[gR1.length - 1] === FOLD;
     const r2fold = gR2.length > 0 && gR2[gR2.length - 1] === FOLD;
     if (r1fold || r2fold) {
         const r = r1fold ? gR1 : gR2;
-        return (r.length - 1) % 2 === gHuman ? 'you folded' : 'opponent folded';
+        return (r.length - 1) % 2 === player ? 'you folded' : 'opponent folded';
     }
     const handStr = p => {
         const c = gCards[p];
         return c === gPubCard ? CARD_LABEL[c] + CARD_LABEL[c] : CARD_LABEL[c];
     };
-    const u = utility(gCards, gPubCard, gR1, gR2, gHuman);
-    const yours = handStr(gHuman), theirs = handStr(1 - gHuman);
+    const u = utility(gCards, gPubCard, gR1, gR2, player);
+    const yours = handStr(player), theirs = handStr(1 - player);
     if (u > 0) return `${yours} > ${theirs}`;
     if (u < 0) return `${yours} < ${theirs}`;
     return `${yours} = ${theirs}`;
@@ -325,7 +493,9 @@ function renderCards() {
     setCard('card-board', gPubCard !== null ? gPubCard : null, true, false);
     const showOpp = inResult && !folded;
     const oppCard = (showOpp && gCards) ? gCards[1 - gHuman] : null;
-    setCard('card-opp', oppCard, false, true, inResult && folded);
+    // In mp-guest mode on fold, we don't have the opponent's card
+    const canRevealFold = gCards !== null && gCards[1 - gHuman] !== null;
+    setCard('card-opp', oppCard, false, true, inResult && folded && canRevealFold);
 }
 
 function setCard(id, card, isBoard, isOpp, foldReveal) {
@@ -348,7 +518,7 @@ function setCard(id, card, isBoard, isOpp, foldReveal) {
 }
 
 function revealOpp(el) {
-    if (!gCards) return;
+    if (!gCards || gCards[1 - gHuman] === null) return;
     const card = gCards[1 - gHuman];
     el.outerHTML = `<div class="card card-face">
         <span class="rank-corner">${CARD_LABEL[card]}♣</span>
@@ -366,9 +536,9 @@ function actionsWithCosts(actions, bet) {
     let p = 0;
     return actions.map(a => {
         let cost = null;
-        if (a === BET)   { cost = bet;                                    committed[p] += bet; }
-        if (a === CALL)  { cost = committed[1-p] - committed[p];          committed[p] = committed[1-p]; }
-        if (a === RAISE) { cost = committed[1-p] + bet - committed[p];    committed[p] = committed[1-p] + bet; }
+        if (a === BET)   { cost = bet;                                 committed[p] += bet; }
+        if (a === CALL)  { cost = committed[1-p] - committed[p];       committed[p] = committed[1-p]; }
+        if (a === RAISE) { cost = committed[1-p] + bet - committed[p]; committed[p] = committed[1-p] + bet; }
         p = 1 - p;
         return cost ? `${a} ${cost}` : a;
     });
@@ -409,12 +579,19 @@ function renderActions() {
             <span class="chips">${sign}${chips}</span>
             <span class="desc">${desc}</span>
         </div>`;
-        actEl.innerHTML = `<button class="btn btn-next" id="next-btn" onclick="nextHand()">Next hand &nbsp;<kbd>Space</kbd></button>`;
+        if (gMode !== 'mp-guest') {
+            actEl.innerHTML = `<button class="btn btn-next" id="next-btn" onclick="nextHand()">Next hand &nbsp;<kbd>Space</kbd></button>`;
+        } else {
+            actEl.innerHTML = `<div class="dim">Waiting for host…</div>`;
+        }
         return;
     }
 
     const p = currentPlayer(gR1, gR2, gCards !== null, gPubCard);
-    if (p !== gHuman) return;
+    if (p !== gHuman) {
+        if (gMode !== 'solo') actEl.innerHTML = `<div class="dim">Waiting for opponent…</div>`;
+        return;
+    }
 
     const actions = legalActions(gR1, gR2);
     const btns = actions.map(a => {
@@ -460,8 +637,8 @@ function renderHistory() {
     const rows = gHistory.map(h => {
         const cls  = h.chips > 0 ? 'win' : h.chips < 0 ? 'loss' : 'draw';
         const sign = h.chips > 0 ? '+' : '';
-        const youCard   = CARD_LABEL[h.cards[h.human]];
-        const oppCard   = h.revealed ? CARD_LABEL[h.cards[1 - h.human]] : '?';
+        const youCard   = h.cards[h.human] !== null ? CARD_LABEL[h.cards[h.human]] : '?';
+        const oppCard   = h.revealed && h.cards[1 - h.human] !== null ? CARD_LABEL[h.cards[1 - h.human]] : '?';
         const boardCard = h.pubCard !== null ? CARD_LABEL[h.pubCard] : '—';
         const r1str = h.r1.length ? actionsWithCosts(h.r1, 2).join(' → ') : '—';
         const r2str = h.r2.length ? actionsWithCosts(h.r2, 4).join(' → ') : '—';
@@ -489,7 +666,9 @@ document.addEventListener('keydown', e => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (!gPlaying) return;
     if (gResult) {
-        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); nextHand(); }
+        if (gMode !== 'mp-guest' && (e.key === ' ' || e.key === 'Enter')) {
+            e.preventDefault(); nextHand();
+        }
         return;
     }
     const p = currentPlayer(gR1, gR2, gCards !== null, gPubCard);
@@ -507,6 +686,11 @@ function startGame(strategy) {
     gStats = { hands: 0, net: 0 };
     gPlaying = false;
     gResult = null;
+
+    if (strategy === 'human') {
+        mpHost();
+        return;
+    }
 
     if (CFR_STRATEGIES.includes(strategy)) {
         setStatus('loading');
@@ -528,6 +712,7 @@ function startGame(strategy) {
 }
 
 function stopGame() {
+    mpDisconnect();
     gPlaying = false;
     gCards = null;
     gHistory = [];
@@ -538,30 +723,38 @@ function stopGame() {
     document.getElementById('history-log').innerHTML = '';
     renderCards();
     renderStats();
+    if (gStrategy === 'human') {
+        document.getElementById('mp-setup').style.display = '';
+        document.getElementById('mp-invite').style.display = 'none';
+        document.getElementById('mp-join-row').style.display = '';
+        document.getElementById('mp-join-input').value = '';
+        setMpStatus('');
+    }
 }
 
 function newSession() {
     gStats = { hands: 0, net: 0 };
     gHistory = [];
+    if (gMode === 'mp-host') mpSend({ type: 'new_session' });
     renderHistory();
     newHand();
 }
 
 function setStatus(status) {
-    const statusEl = document.getElementById('status');
-    const startBtn = document.getElementById('start-btn');
-    const stopBtn  = document.getElementById('stop-btn');
+    const statusEl  = document.getElementById('status');
+    const startBtn  = document.getElementById('start-btn');
+    const stopBtn   = document.getElementById('stop-btn');
     const newSessBtn = document.getElementById('new-session-btn');
-    const stratSel = document.getElementById('strategy-select');
+    const stratSel  = document.getElementById('strategy-select');
 
     statusEl.className = status;
     stratSel.disabled = (status !== 'idle');
-    startBtn.style.display  = (status === 'idle')    ? '' : 'none';
-    stopBtn.style.display   = (status === 'playing') ? '' : 'none';
+    startBtn.style.display   = (status === 'idle')    ? '' : 'none';
+    stopBtn.style.display    = (status === 'playing' || status === 'loading') ? '' : 'none';
     newSessBtn.style.display = (status === 'playing') ? '' : 'none';
 
     if (status === 'idle')    { statusEl.textContent = ''; renderCards(); }
-    if (status === 'loading') { statusEl.textContent = 'Loading…'; }
+    if (status === 'loading') { statusEl.textContent = ''; }
     if (status === 'playing') { statusEl.textContent = ''; }
     if (status === 'error')   { statusEl.textContent = 'Failed to load strategy. Are you running a local server?'; }
 }
@@ -577,8 +770,17 @@ window.addEventListener('DOMContentLoaded', () => {
         sel.appendChild(opt);
     }
 
+    // Auto-join if ?join= param is present in URL
+    const joinId = new URLSearchParams(location.search).get('join');
+    if (joinId) {
+        sel.value = 'human';
+        document.getElementById('mp-setup').style.display = '';
+        document.getElementById('mp-join-input').value = joinId;
+        mpJoin();
+    }
+
     // Show idle card backs
-    ['card-human','card-opp'].forEach(id => {
+    ['card-human', 'card-opp'].forEach(id => {
         document.getElementById(id).innerHTML = '<div class="card card-back"></div>';
     });
     document.getElementById('card-board').innerHTML = '<div class="card card-empty">?</div>';

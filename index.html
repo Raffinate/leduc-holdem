@@ -295,6 +295,39 @@ kbd {
 .log-chips.draw { color: #aaa; }
 .log-desc  { font-size: 12px; }
 .log-row   { font-size: 12px; margin-top: 2px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+
+/* ── Multiplayer setup panel ───────────────────────────────────── */
+#mp-setup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    border: 1px solid #2a2a2a;
+    border-radius: 5px;
+    background: #1e1e1e;
+}
+
+#mp-invite { font-size: 13px; color: #aaa; }
+
+#mp-join-row { display: flex; align-items: center; gap: 8px; }
+
+#mp-join-input {
+    background: #2a2a2a;
+    color: #ddd;
+    border: 1px solid #444;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    width: 230px;
+}
+#mp-join-input:focus { border-color: #666; }
+#mp-join-input::placeholder { color: #555; }
+
+#mp-status-msg { font-size: 13px; color: #888; }
 </style>
 </head>
 <body>
@@ -302,13 +335,23 @@ kbd {
 <h1>Leduc Hold'em — Play vs Solver</h1>
 
 <div id="controls">
-    <select id="strategy-select" onchange=""></select>
+    <select id="strategy-select" onchange="onStrategyChange(this.value)"></select>
     <button class="btn" id="start-btn" onclick="startGame(document.getElementById('strategy-select').value)">▶ Start</button>
     <button class="btn" id="stop-btn"      style="display:none" onclick="stopGame()">⏹ Stop</button>
     <button class="btn" id="new-session-btn" style="display:none" onclick="newSession()">↺ New Session</button>
     <span id="sep"></span>
     <span id="stats"></span>
     <span id="status"></span>
+</div>
+
+<div id="mp-setup" style="display:none">
+    <div id="mp-invite" style="display:none"></div>
+    <div id="mp-join-row">
+        <input id="mp-join-input" placeholder="Peer ID or invite URL"
+               onkeydown="if(event.key==='Enter')mpJoin()" />
+        <button class="btn" onclick="mpJoin()">Join ▶</button>
+    </div>
+    <span id="mp-status-msg"></span>
 </div>
 
 <hr id="divider">
@@ -337,6 +380,7 @@ kbd {
     <div id="history-log"></div>
 </details>
 
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
