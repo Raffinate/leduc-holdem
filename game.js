@@ -683,7 +683,7 @@ document.addEventListener('keydown', e => {
 function toggleTheme() {
     const light = document.body.classList.toggle('light');
     localStorage.setItem('theme', light ? 'light' : 'dark');
-    document.getElementById('theme-btn').textContent = light ? 'Dark' : 'Light';
+    document.getElementById('theme-btn').textContent = light ? '☾' : '☀';
 }
 
 // ── Controls ───────────────────────────────────────────────────────────────
@@ -778,7 +778,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('theme-btn').textContent =
-        document.body.classList.contains('light') ? 'Dark' : 'Light';
+        document.body.classList.contains('light') ? '☾' : '☀';
 
     // Auto-join if ?join= param is present in URL
     const joinId = new URLSearchParams(location.search).get('join');

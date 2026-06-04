@@ -389,6 +389,19 @@ kbd {
 #mp-join-input::placeholder { color: var(--text-faint); }
 
 #mp-status-msg { font-size: 13px; color: var(--text-muted); }
+
+#theme-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: color 0.1s;
+}
+#theme-btn:hover { color: var(--text); }
 </style>
 </head>
 <body>
@@ -443,7 +456,7 @@ kbd {
 </details>
 
 <div style="text-align:right; margin-top:20px">
-    <button class="btn" id="theme-btn" onclick="toggleTheme()">Light</button>
+    <button id="theme-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
