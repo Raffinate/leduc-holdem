@@ -493,8 +493,7 @@ function renderCards() {
     setCard('card-board', gPubCard !== null ? gPubCard : null, true, false);
     const showOpp = inResult && !folded;
     const oppCard = (showOpp && gCards) ? gCards[1 - gHuman] : null;
-    // In mp-guest mode on fold, we don't have the opponent's card
-    const canRevealFold = gCards !== null && gCards[1 - gHuman] !== null;
+    const canRevealFold = gMode === 'solo' && gCards !== null && gCards[1 - gHuman] !== null;
     setCard('card-opp', oppCard, false, true, inResult && folded && canRevealFold);
 }
 
