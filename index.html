@@ -391,6 +391,9 @@ kbd {
 #mp-status-msg { font-size: 13px; color: var(--text-muted); }
 
 #theme-btn {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
     background: none;
     border: none;
     font-size: 18px;
@@ -455,9 +458,7 @@ kbd {
     <div id="history-log"></div>
 </details>
 
-<div style="text-align:right; margin-top:20px">
-    <button id="theme-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
-</div>
+<button id="theme-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="game.js"></script>
