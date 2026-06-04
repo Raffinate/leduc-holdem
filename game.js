@@ -246,6 +246,10 @@ function mpCopyId(id) {
     navigator.clipboard.writeText(id).then(() => setMpStatus('Copied!'));
 }
 
+function mpCopyLink(url) {
+    navigator.clipboard.writeText(url).then(() => setMpStatus('Link copied!'));
+}
+
 function mpSend(msg) {
     if (gConn) gConn.send(JSON.stringify(msg));
 }
@@ -272,7 +276,8 @@ function mpHost() {
         const el = document.getElementById('mp-invite');
         el.style.display = '';
         el.innerHTML = `<span class="dim">ID: ${id}</span>`
-            + `<button class="mp-copy-btn" onclick="mpCopyId('${id}')" title="Copy ID">${copyIcon}</button>`;
+            + `<button class="mp-copy-btn" onclick="mpCopyId('${id}')" title="Copy ID">${copyIcon}</button>`
+            + ` &nbsp; <button class="btn" onclick="mpCopyLink('${url}')">Copy invite link</button>`;
         setMpStatus('Waiting for opponent…');
     });
     gPeer.on('connection', conn => {
