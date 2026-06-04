@@ -503,7 +503,7 @@ function setCard(id, card, isBoard, isOpp, foldReveal) {
         const label = CARD_LABEL[card];
         const suits = isBoard ? ['♥', '#c44'] : isOpp ? ['♣', '#222'] : ['♠', '#222'];
         el.innerHTML = `<div class="card card-face">
-            <span class="rank-corner">${label}${suits[0]}</span>
+            <span class="rank-corner" style="color:${suits[1]}">${label}${suits[0]}</span>
             <span class="rank-center" style="color:${suits[1]}">${label}</span>
             <span class="suit-center" style="color:${suits[1]}">${suits[0]}</span>
         </div>`;
