@@ -11,7 +11,7 @@ const ALL_STRATEGIES = ['human', ...CFR_STRATEGIES, 'abc', 'random', 'always_cal
 
 const STRATEGY_LABELS = {
     exact: 'The Computer',       relative: 'The Pro',          pair: 'The Regular',
-    card_only: 'The Sticky',     board_only: 'The Pure Reader', pair_only: 'The Recreational',
+    card_only: 'The Sticky',     board_only: 'The Reader', pair_only: 'The Recreational',
     blind: 'The Philosopher',    abc: 'ABC',                    random: 'Random',
     always_call: 'Always Call',  always_raise: 'Always Raise',
     human: 'vs Human',
