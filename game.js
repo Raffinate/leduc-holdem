@@ -235,6 +235,12 @@ let gGuestSeat = null;  // guest's seat index, from host's perspective
 
 function onStrategyChange(s) {
     document.getElementById('mp-setup').style.display = s === 'human' ? '' : 'none';
+    if (s === 'human') {
+        document.getElementById('mp-invite').style.display = 'none';
+        document.getElementById('mp-join-row').style.display = '';
+        document.getElementById('mp-join-input').value = '';
+        setMpStatus('');
+    }
 }
 
 function setMpStatus(msg) {
@@ -318,6 +324,7 @@ function mpJoin() {
         gConn = gPeer.connect(id, { reliable: true });
         gConn.on('open', () => {
             gMode = 'mp-guest';
+            gStrategy = 'human';
             gPlaying = true;
             gStats = { hands: 0, net: 0 };
             gHistory = [];
