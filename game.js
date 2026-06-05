@@ -7,14 +7,14 @@ const J = 0, Q = 1, K = 2;
 // ── Action constants ───────────────────────────────────────────────────────
 const CHECK = 'Check', BET = 'Bet', CALL = 'Call', RAISE = 'Raise', FOLD = 'Fold';
 const CFR_STRATEGIES = ['exact','relative','pair','card_only','board_only','pair_only','blind'];
-const ALL_STRATEGIES = [...CFR_STRATEGIES, 'abc', 'random', 'always_call', 'always_raise', 'human'];
+const ALL_STRATEGIES = ['human', ...CFR_STRATEGIES, 'abc', 'random', 'always_call', 'always_raise'];
 
 const STRATEGY_LABELS = {
-    exact: 'Exact (CFR)',         relative: 'Relative (CFR)',   pair: 'Pair (CFR)',
-    card_only: 'Card Only (CFR)', board_only: 'Board Only (CFR)', pair_only: 'Pair Only (CFR)',
-    blind: 'Blind (CFR)',         abc: 'ABC (heuristic)',        random: 'Random',
-    always_call: 'Always Call',   always_raise: 'Always Raise',
-    human: 'vs Human (WebRTC)',
+    exact: 'The Computer',       relative: 'The Pro',          pair: 'The Regular',
+    card_only: 'The Sticky',     board_only: 'The Pure Reader', pair_only: 'The Recreational',
+    blind: 'The Philosopher',    abc: 'ABC',                    random: 'Random',
+    always_call: 'Always Call',  always_raise: 'Always Raise',
+    human: 'vs Human',
 };
 
 const HOTKEYS = {
@@ -792,6 +792,7 @@ window.addEventListener('DOMContentLoaded', () => {
         opt.textContent = STRATEGY_LABELS[s];
         sel.appendChild(opt);
     }
+    sel.value = 'exact';
 
     document.getElementById('theme-btn').textContent =
         document.body.classList.contains('light') ? '☾' : '☀';
