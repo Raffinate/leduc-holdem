@@ -669,6 +669,7 @@ function nextHand() { newHand(); }
 
 document.addEventListener('keydown', e => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'Escape') { closeHelp(); return; }
     if (!gPlaying) return;
     if (gResult) {
         if (gMode !== 'mp-guest' && (e.key === ' ' || e.key === 'Enter')) {
@@ -683,6 +684,15 @@ document.addEventListener('keydown', e => {
         if (HOTKEYS[a].includes(e.key)) { e.preventDefault(); humanAct(a); return; }
     }
 });
+
+// ── Help modal ─────────────────────────────────────────────────────────────
+
+function openHelp() {
+    document.getElementById('help-overlay').style.display = 'flex';
+}
+function closeHelp() {
+    document.getElementById('help-overlay').style.display = 'none';
+}
 
 // ── Theme ──────────────────────────────────────────────────────────────────
 

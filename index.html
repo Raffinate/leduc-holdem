@@ -407,6 +407,48 @@ kbd {
 }
 .mp-copy-btn:hover { color: var(--text); }
 
+/* ── Help modal ────────────────────────────────────────────────────── */
+#help-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+}
+#help-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: min(560px, 92vw);
+    max-height: 80vh;
+    display: flex; flex-direction: column;
+}
+#help-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-dim);
+    font-size: 14px; color: var(--text-hi);
+}
+#help-header button {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 16px; line-height: 1;
+}
+#help-header button:hover { color: var(--text); }
+#help-body {
+    padding: 18px; overflow-y: auto; font-size: 13px;
+    line-height: 1.6; color: var(--text-info);
+}
+#help-body h3 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--text-muted); margin: 18px 0 6px;
+}
+#help-body h3:first-child { margin-top: 0; }
+#help-body p { margin-bottom: 8px; }
+#help-body ol { padding-left: 18px; margin-bottom: 8px; }
+#help-body li { margin-bottom: 3px; }
+#help-body table { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
+#help-body td { padding: 3px 10px 3px 0; vertical-align: top; }
+#help-body td:first-child { color: var(--text-mid); white-space: nowrap; min-width: 80px; }
+
 #theme-btn {
     position: fixed;
     bottom: 16px;
@@ -434,6 +476,7 @@ kbd {
     <button class="btn" id="start-btn" onclick="startGame(document.getElementById('strategy-select').value)">▶ Start</button>
     <button class="btn" id="stop-btn"      style="display:none" onclick="stopGame()">⏹ Stop</button>
     <button class="btn" id="new-session-btn" style="display:none" onclick="newSession()">↺ New Session</button>
+    <button class="btn" onclick="openHelp()" title="How to play">?</button>
     <span id="sep"></span>
     <span id="stats"></span>
     <span id="status"></span>
@@ -476,6 +519,65 @@ kbd {
 </details>
 
 <button id="theme-btn" onclick="toggleTheme()" title="Toggle theme">☀</button>
+
+<div id="help-overlay" onclick="closeHelp()" style="display:none">
+  <div id="help-modal" onclick="event.stopPropagation()">
+    <div id="help-header">
+      <span>How to play</span>
+      <button onclick="closeHelp()">&#x2715;</button>
+    </div>
+    <div id="help-body">
+      <h3>What is Leduc Hold'em?</h3>
+      <p>Leduc Hold'em is a simplified 2-player poker game designed for studying game theory and GTO strategy. It uses a tiny deck and two short betting rounds, making it small enough for humans to learn GTO-optimal strategy, but complex enough to capture all key poker concepts: pot odds, bluffs, ranges as well as checking, betting and calling frequencies. It is ideal for understanding all poker concepts and developing general game theory intuition.</p>
+
+      <h3>The deck</h3>
+      <p>6 cards total: Jack (J), Queen (Q), King (K), two suits. K beats Q and Q beats Jack.</p>
+
+      <h3>How a hand plays</h3>
+      <ol>
+        <li>Both players post a blind of 1 chip.</li>
+        <li>Each player is dealt one private card face-down.</li>
+        <li><strong>Round 1</strong> — first betting round. Bet size is 2, raise is to 4.</li>
+        <li>A public card is dealt face-up (the board).</li>
+        <li><strong>Round 2</strong> — second betting round. Bet size is 4, raise is to 8.</li>
+        <li>If both players are still in, there is a showdown.</li>
+      </ol>
+
+      <h3>Showdown</h3>
+      <p>A <strong>pair</strong> (your private card matches the board card) beats any non-paired hand regardless of rank. If neither player has a pair, the higher card wins: K &gt; Q &gt; J. Identical holdings split the pot.</p>
+
+      <h3>Betting round</h3>
+      <p>When no bet or raise has been made yet, a player can either keep things as is (check) or put more money in the pot (bet). Facing a bet, the opponent must either match it (call), exceed it (raise), or surrender the pot (fold). When facing a raise, the only options are to call or to fold — only one raise per round is allowed. The hand ends if a player folds; otherwise it continues to the next round or showdown.</p>
+
+      <h3>Actions</h3>
+      <table>
+        <tr><td>Check</td><td>Pass the action without betting (only when no bet is open).</td></tr>
+        <tr><td>Bet</td><td>Open the betting for this round.</td></tr>
+        <tr><td>Call</td><td>Match the opponent's bet to stay in.</td></tr>
+        <tr><td>Raise</td><td>Increase the bet by the round amount. Max 1 raise per round.</td></tr>
+        <tr><td>Fold</td><td>Surrender your cards and lose your chips invested so far.</td></tr>
+      </table>
+
+      <h3>Opponent Strategies</h3>
+      <table>
+        <tr><td>Exact</td><td>Knows its private card and the exact board card.</td></tr>
+        <tr><td>Relative</td><td>Knows if the board is higher, lower, or pairs its card.</td></tr>
+        <tr><td>Pair</td><td>Only knows if it has a pair or not.</td></tr>
+        <tr><td>Card Only</td><td>Knows its private card but ignores the board.</td></tr>
+        <tr><td>Board Only</td><td>Knows the board but ignores its private card.</td></tr>
+        <tr><td>Pair Only</td><td>Only knows pair/no-pair, ignores card ranks.</td></tr>
+        <tr><td>Blind</td><td>Acts with no information at all.</td></tr>
+      </table>
+      <p><strong>Baselines</strong> — fixed rule-based opponents:</p>
+      <table>
+        <tr><td>ABC</td><td>Bets/raises with K or a pair, checks/folds with J, checks/calls with Q.</td></tr>
+        <tr><td>Always Call</td><td>Never bets, always calls or checks.</td></tr>
+        <tr><td>Always Raise</td><td>Always bets or raises when possible.</td></tr>
+        <tr><td>Random</td><td>Picks a random legal action each turn.</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="game.js"></script>
