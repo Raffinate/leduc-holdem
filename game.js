@@ -7,7 +7,7 @@ const J = 0, Q = 1, K = 2;
 // ── Action constants ───────────────────────────────────────────────────────
 const CHECK = 'Check', BET = 'Bet', CALL = 'Call', RAISE = 'Raise', FOLD = 'Fold';
 const CFR_STRATEGIES = ['exact','relative','pair','card_only','board_only','pair_only','blind','abc','always_call','always_raise','random'];
-const ALL_STRATEGIES = ['human', ...CFR_STRATEGIES, 'abc', 'random', 'always_call', 'always_raise'];
+const ALL_STRATEGIES = ['human', ...CFR_STRATEGIES];
 
 const STRATEGY_LABELS = {
     exact: 'The Computer',       relative: 'The Pro',          pair: 'The Regular',
