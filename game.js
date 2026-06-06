@@ -6,7 +6,7 @@ const J = 0, Q = 1, K = 2;
 
 // ── Action constants ───────────────────────────────────────────────────────
 const CHECK = 'Check', BET = 'Bet', CALL = 'Call', RAISE = 'Raise', FOLD = 'Fold';
-const CFR_STRATEGIES = ['exact','relative','pair','card_only','board_only','pair_only','blind'];
+const CFR_STRATEGIES = ['exact','relative','pair','card_only','board_only','pair_only','blind','abc','always_call','always_raise','random'];
 const ALL_STRATEGIES = ['human', ...CFR_STRATEGIES, 'abc', 'random', 'always_call', 'always_raise'];
 
 const STRATEGY_LABELS = {
@@ -155,7 +155,14 @@ function infoStateKey(card, pubCard, r1, r2, strategy) {
             return `${d}|${r1s}|${r2s}`;
         }
         case 'blind':
+        case 'always_call':
+        case 'always_raise':
+        case 'random':
             return `${pubCard !== null ? 'pub' : '-'}|${r1s}|${r2s}`;
+        case 'abc': {
+            const d = pubCard === null ? '-' : card === pubCard ? 'pair' : 'no_pair';
+            return `${cl}|${d}|${r1s}|${r2s}`;
+        }
         default:
             return '';
     }
@@ -190,22 +197,6 @@ function chooseAction(strategy, strategyData, card, pubCard, r1, r2, player) {
 }
 
 function fixedAction(strategy, card, pubCard, actions) {
-    const has = a => actions.includes(a);
-    const prefer = (...prefs) => prefs.find(has) || actions[0];
-    switch (strategy) {
-        case 'always_raise': return prefer(RAISE, BET, CALL, CHECK, FOLD);
-        case 'always_call':  return prefer(CALL, CHECK, FOLD);
-        case 'random': {
-            const pool = has(CHECK) ? actions.filter(a => a !== FOLD) : actions;
-            return pool[Math.floor(Math.random() * pool.length)];
-        }
-        case 'abc': {
-            const pair = pubCard !== null && card === pubCard;
-            if (pair || card === K) return prefer(RAISE, BET, CALL, CHECK, FOLD);
-            if (card === J)         return prefer(CHECK, FOLD, CALL, RAISE, BET);
-            return prefer(CHECK, CALL, FOLD, RAISE, BET);
-        }
-    }
     return actions[0];
 }
 
