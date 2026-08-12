@@ -725,7 +725,9 @@ function startGame(strategy) {
             .then(r => r.json())
             .catch(() => { setStatus('error'); throw null; })
             .then(data => {
-                gStrategyData = data;
+                // The Rust exporter wraps the info-state table under a "strategy" key,
+                // alongside "meta" (and "state" for CFR strategies).
+                gStrategyData = data.strategy;
                 gPlaying = true;
                 setStatus('playing');
                 newHand();
