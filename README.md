@@ -6,7 +6,7 @@ Leduc Hold'em is a simplified poker variant designed for game theory research. T
 
 The interesting part: all 11 AI strategies play the same game, but each agent observes a different amount of information. Some know their exact hand relative to the board. Some only know if they have a pair. One plays completely blind. This makes it a practical demonstration of how **information abstraction** changes game-theoretic optimal play.
 
-No installation required — static HTML/JS, no build step.
+Play it at [raffinate.github.io/leduc-holdem](https://raffinate.github.io/leduc-holdem/), against any of the AI strategies or a friend online.
 
 ## Rules
 
@@ -27,50 +27,41 @@ No installation required — static HTML/JS, no build step.
 
 Both players can never have a pair simultaneously — the public card is dealt from the remaining 4 cards, so if both private cards are the same rank, that rank is already exhausted.
 
-## Play
-
-Serve the directory over HTTP and open `index.html`:
-
-```
-python3 -m http.server 8080
-```
-
-Then open `http://localhost:8080`.
-
 ## Strategies
 
 ### CFR strategies
 
 Trained with vanilla Counterfactual Regret Minimization at 100,000 iterations. Each converges to a Nash equilibrium for its particular information abstraction — meaning no opponent can exploit it *given what it can observe*. The strategies differ only in what their `info_state_key` contains; the game tree, rules, and payoffs are identical.
 
-| Strategy | What the AI observes |
-|----------|----------------------|
-| `exact` | Private card + exact public card rank |
-| `relative` | Private card + whether public card is higher, lower, or a pair |
-| `pair` | Private card + whether it makes a pair with the public card |
-| `card_only` | Private card only — ignores the public card entirely |
-| `board_only` | Public card only — ignores its own private card |
-| `pair_only` | Pair/no pair only — knows neither card rank |
-| `blind` | Betting history only — no card information at all |
+| Strategy | In the game | What the AI observes |
+|----------|-------------|----------------------|
+| `exact` | The Computer | Private card + exact public card rank |
+| `relative` | The Pro | Private card + whether public card is higher, lower, or a pair |
+| `pair` | The Regular | Private card + whether it makes a pair with the public card |
+| `card_only` | The Sticky | Private card only — ignores the public card entirely |
+| `board_only` | The Reader | Public card only — ignores its own private card |
+| `pair_only` | The Recreational | Pair/no pair only — knows neither card rank |
+| `blind` | The Philosopher | Betting history only — no card information at all |
 
 `exact` is the most informed and plays closest to full-information GTO. Each step down the list removes information, and the Nash equilibrium changes accordingly. The solution is not an approximation of a better strategy — it is genuinely optimal for the information the agent has.
 
 ### Fixed strategies
 
-Rule-based, no training required.
+Rule-based, no training required. holdemsolver still exports each one as a lookup table, so the
+client plays every strategy the same way. `abc` is keyed like `pair`; the other three like `blind`.
 
-| Strategy | Behaviour |
-|----------|-----------|
-| `abc` | K or pair → always bet/raise; J → check/fold; Q → check/call |
-| `random` | Uniform random over legal actions; never folds when check is available |
-| `always_call` | Always call or check, never initiates bets |
-| `always_raise` | Always raise or bet |
+| Strategy | In the game | Behaviour |
+|----------|-------------|-----------|
+| `abc` | ABC | K or pair → always bet/raise; J → check/fold; Q → check/call |
+| `random` | Random | Uniform random over legal actions; never folds when check is available |
+| `always_call` | Always Call | Always call or check, never initiates bets |
+| `always_raise` | Always Raise | Always raise or bet |
 
 `abc` is the strongest non-CFR strategy. It plays a reasonable hand-strength heuristic and heavily beats strategies that ignore card information (`blind`, `board_only`).
 
 ## Reading the strategy files
 
-Each `data/<strategy>.json` maps **info state keys** to **action probabilities**. Fixed strategies (`abc`, `random`, `always_call`, `always_raise`) have empty files — they are implemented directly in code.
+Each `public/data/<strategy>.json` maps **info state keys** to **action probabilities**, under a `strategy` key (CFR exports also carry `meta` and the solver `state`). `src/game/data.test.ts` checks every file still matches the client's key schemes.
 
 ### Action history tokens
 
@@ -263,8 +254,40 @@ Facing any bet (`-|b|`, `pub|b|`), the blind agent always raises — a pure bluf
 
 ## Regenerating strategies
 
-Strategies are precomputed from the [holdemsolver](https://github.com/Raffinate/holdem_solver) repo at 100k CFR iterations:
+Strategies are precomputed from the `holdemsolver` repo at 100k CFR iterations:
 
 ```
 make strategies   # run from holdemsolver/
 ```
+
+That target copies the exported JSON into `WEB_REPO`, which must point at `../leduc-holdem/public/data`.
+
+## Multiplayer
+
+Peer-to-peer via WebRTC ([PeerJS](https://peerjs.com)). One player hosts and sends the invite link;
+the other opens it or pastes it into Join. The host deals every card and owns the game state; the
+guest only learns its own card, and the opponent's at showdown.
+
+## Develop
+
+```sh
+pnpm install
+pnpm dev         # http://localhost:5173
+pnpm test
+pnpm typecheck
+pnpm build
+```
+
+Stack: Solid 2, [ui-sdk](https://ui-sdk.dev) components styled with Tailwind 4, Vite. Same as the other
+projects on [raffinate.github.io](https://raffinate.github.io/). The rules and the session state
+machine (`src/game/`) are plain TypeScript with no UI dependencies; components in `src/components/`
+render a snapshot of the session.
+
+Analytics: cookieless PostHog (page views, clicks, and `game_started`, `hand_ended`,
+`multiplayer_connected` events), only on the deployed site, with the same project and settings as the
+rest of the site. The light/dark choice uses the blog's `theme` key, so it carries across the site.
+
+## Deploy
+
+`.github/workflows/deploy.yml` builds and deploys to GitHub Pages on every push to `main`. In the
+repository settings, set **Pages → Source** to **GitHub Actions**.
